@@ -21,9 +21,11 @@ const dinosaurSchema = yup.object().shape({
   image: yup.string().trim().url().required(),
 });
 
+const app = new Application();
+const router = new Router();
+
 const DB = new Map<string, Dinosaur>();
 
-const router = new Router();
 router.get("/", (ctx: RouterContext<"/">) => {
   ctx.response.body = {
     message: "Hello World! 🦕",
@@ -61,8 +63,6 @@ router.delete("/dinosaurs/:id", (ctx: RouterContext<"/dinosaurs/:id">) => {
     throw error;
   }
 });
-
-const app = new Application();
 
 app.use(async (ctx: Context, next: () => Promise<unknown>) => {
   try {

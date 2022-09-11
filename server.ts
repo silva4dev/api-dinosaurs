@@ -1,4 +1,9 @@
-import { Application, Router } from "https://deno.land/x/oak@v11.1.0/mod.ts";
+import {
+  Application,
+  Context,
+  Router,
+  RouterContext,
+} from "https://deno.land/x/oak@v11.1.0/mod.ts";
 import * as yup from "https://cdn.skypack.dev/yup";
 
 interface RequestError extends Error {
@@ -19,17 +24,17 @@ const dinosaurSchema = yup.object().shape({
 const DB = new Map<string, Dinosaur>();
 
 const router = new Router();
-router.get("/", (ctx) => {
+router.get("/", (ctx: RouterContext<"/">) => {
   ctx.response.body = {
     message: "Hello World! 🦕",
   };
 });
 
-router.get("/dinosaurs", (ctx) => {
+router.get("/dinosaurs", (ctx: RouterContext<"/dinosaurs">) => {
   ctx.response.body = [...DB.values()];
 });
 
-router.post("/dinosaurs", async (ctx) => {
+router.post("/dinosaurs", async (ctx: RouterContext<"/dinosaurs">) => {
   try {
     const body = await ctx.request.body();
     if (body.type !== "json") throw new Error("Invalid Body");
@@ -45,7 +50,7 @@ router.post("/dinosaurs", async (ctx) => {
   }
 });
 
-router.delete("/dinosaurs/:id", (ctx) => {
+router.delete("/dinosaurs/:id", (ctx: RouterContext<"/dinosaurs/:id">) => {
   const { id } = ctx.params;
   if (id && DB.has(id)) {
     ctx.response.status = 204;
@@ -59,7 +64,7 @@ router.delete("/dinosaurs/:id", (ctx) => {
 
 const app = new Application();
 
-app.use(async (ctx, next) => {
+app.use(async (ctx: Context, next: () => Promise<unknown>) => {
   try {
     await next();
   } catch (err) {
@@ -74,5 +79,8 @@ app.use(async (ctx, next) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-console.log("Listening on http://localhost:3000");
+app.addEventListener("listen", ({ hostname, port }) => {
+  console.log(`Listening on ${hostname}:${port}`);
+});
+
 await app.listen({ port: 3000 });
